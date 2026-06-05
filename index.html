@@ -443,12 +443,14 @@ tbody tr:hover { background: #faf9ff; }
 
 <script>
 /* ============================================================
-   ⚙️  CONFIG — 已填入汎高科技有限公司的金鑰
+   ⚙️  CONFIG — 已填入汎高科技有限公司的金鑰與指定雲端硬碟 ID
    ============================================================ */
 const CONFIG = {
   CLIENT_ID: '701533078943-eepuoij9k5j4jd5sbqbrmmhjjoo41rip.apps.googleusercontent.com',
   API_KEY:   'AIzaSyCBEfBSNjnENrbEWkkYiZXdjusJvmD-Wwo',
   SHEET_ID:  '1E0NR4KEyVl5ZHqiPmgQ4SZMpUUhL711uDzBUZ3lUI_A',
+  // dc 指定的專屬資料夾 ID (供所有上傳的照片存放)
+  DRIVE_FOLDER_ID: '1fLXiMH2E2SSiUmicBFXjylNmxdBI-W5K'
 };
 
 const SCOPES = [
@@ -464,9 +466,10 @@ const DISCOVERY_DOCS = [
 ];
 
 const SHEET_RANGE = 'Sheet1!A:H';
-const DRIVE_FOLDER_NAME = '汎高703館-零用金紀錄';
 const LS_PENDING = 'cat_pending_records_v1';
 const LS_VENDORS = 'fango_vendors_v1';
+const LS_TOKEN = 'cat_token_v1';
+const LS_TOKEN_EXPIRE = 'cat_expire_v1';
 
 /* ============================================================
    狀態
@@ -477,11 +480,9 @@ const state = {
   tokenClient: null,
   accessToken: null,
   userEmail: null,
-  driveFolderId: null,
   records: [],          // { date, category, amount, paidBy, description, photoUrl, time, ocrMethod, synced }
   currentFile: null,    // { file, base64, isPdf }
   ocrMethod: '手動輸入',
-  // 預設三個常用廠商，後續系統會自動學習
   savedVendors: JSON.parse(localStorage.getItem(LS_VENDORS) || '["中油", "振宇五金", "7-11"]'),
 };
 
@@ -515,10 +516,9 @@ function toast(msg, type = 'info', ms = 4000) {
 }
 
 /* ============================================================
-   Google API 初始化
+   Google API 初始化與無感自動登入
    ============================================================ */
 function maybeBoot() {
-  // 兩個腳本都載入後才開始
   if (window.gapi && !state._gapiLoadCalled) {
     state._gapiLoadCalled = true;
     gapi.load('client', initGapiClient);
@@ -557,12 +557,11 @@ function initGis() {
 
 function finishBoot() {
   if (state.gapiReady && state.gisReady) {
-    showLogin();
+    checkAutoLogin();
   }
 }
 
 function renderSignInButton() {
-  // 使用自訂按鈕觸發 token client（較能整合 Drive/Sheets 授權）
   const host = $('googleSignInBtn');
   host.innerHTML = '';
   const btn = document.createElement('button');
@@ -573,13 +572,37 @@ function renderSignInButton() {
   host.appendChild(btn);
 }
 
+// 檢查是否可以跳過登入畫面直接進入 (1 小時免登入機制)
+function checkAutoLogin() {
+  const token = localStorage.getItem(LS_TOKEN);
+  const expire = localStorage.getItem(LS_TOKEN_EXPIRE);
+  
+  // 若 Token 存在且距離過期還大於 1 分鐘 (60000ms)，直接使用
+  if (token && expire && Date.now() < parseInt(expire) - 60000) {
+    state.accessToken = token;
+    gapi.client.setToken({ access_token: token });
+    
+    // 取得使用者信箱並進入畫面 (靜默進行)
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + token }
+    }).then(r => r.json()).then(info => {
+      state.userEmail = info.email || '已登入使用者';
+      enterApp(true); // 傳入 true 代表是自動登入，不彈跳成功提示
+    }).catch(() => {
+      // Token 若失效則重新登入
+      showLogin();
+    });
+  } else {
+    showLogin();
+  }
+}
+
 /* ============================================================
    認證流程
    ============================================================ */
 function requestSignIn() {
   if (!isConfigured()) { toast('請先設定 API 憑證', 'err'); return; }
   if (!state.tokenClient) { toast('Google 登入尚未就緒，請稍候', 'warn'); return; }
-  // prompt: 'consent' 確保首次取得所需授權；之後可省略
   state.tokenClient.requestAccessToken({ prompt: state.accessToken ? '' : 'consent' });
 }
 
@@ -591,8 +614,12 @@ async function handleTokenResponse(resp) {
   }
   state.accessToken = resp.access_token;
   gapi.client.setToken({ access_token: resp.access_token });
+  
+  // 記錄到手機/電腦以實現無感登入 (Token 時效通常為 3599 秒)
+  const expiresIn = resp.expires_in || 3599;
+  localStorage.setItem(LS_TOKEN, state.accessToken);
+  localStorage.setItem(LS_TOKEN_EXPIRE, Date.now() + (expiresIn * 1000));
 
-  // 取得使用者 email
   try {
     const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: 'Bearer ' + resp.access_token }
@@ -600,18 +627,17 @@ async function handleTokenResponse(resp) {
     state.userEmail = info.email || '已登入使用者';
   } catch { state.userEmail = '已登入使用者'; }
 
-  enterApp();
+  enterApp(false);
 }
 
-function enterApp() {
+function enterApp(isAutoLogin = false) {
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
   $('userEmail').textContent = state.userEmail;
   loadPendingFromLocal();
   renderRecords();
   renderStats();
-  toast('登入成功，歡迎使用！', 'ok');
-  ensureDriveFolder().catch(e => console.warn('資料夾準備延後', e));
+  if (!isAutoLogin) toast('登入成功，歡迎使用！', 'ok');
 }
 
 function logout() {
@@ -621,6 +647,11 @@ function logout() {
   state.accessToken = null;
   state.userEmail = null;
   gapi.client.setToken(null);
+  
+  // 清除本地登入記憶
+  localStorage.removeItem(LS_TOKEN);
+  localStorage.removeItem(LS_TOKEN_EXPIRE);
+  
   $('appScreen').classList.add('hidden');
   showLogin();
   toast('已登出', 'info');
@@ -982,7 +1013,7 @@ async function onSubmit(e) {
   };
 
   try {
-    // 1) 上傳照片到 Drive（並行起點）
+    // 1) 上傳照片到指定 Drive 資料夾
     let photoUrl = '';
     if (state.currentFile) {
       try {
@@ -1041,29 +1072,11 @@ function formatNow() {
 }
 
 /* ============================================================
-   Google Drive — 資料夾 + 上傳
+   Google Drive — 直接上傳至 dc 指定資料夾
    ============================================================ */
-async function ensureDriveFolder() {
-  if (state.driveFolderId) return state.driveFolderId;
-  // 查找
-  const resp = await gapi.client.drive.files.list({
-    q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id,name)',
-  });
-  if (resp.result.files && resp.result.files.length) {
-    state.driveFolderId = resp.result.files[0].id;
-  } else {
-    const created = await gapi.client.drive.files.create({
-      resource: { name: DRIVE_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' },
-      fields: 'id',
-    });
-    state.driveFolderId = created.result.id;
-  }
-  return state.driveFolderId;
-}
-
 async function uploadToDrive(file) {
-  const folderId = await ensureDriveFolder();
+  // 直接使用 CONFIG 內寫死的指定資料夾 ID
+  const folderId = CONFIG.DRIVE_FOLDER_ID;
   const fileName = `receipt_${Date.now()}_${file.name}`;
 
   const metadata = { name: fileName, parents: [folderId] };
@@ -1091,7 +1104,7 @@ async function uploadToDrive(file) {
   if (!res.ok) throw new Error('Drive 上傳回應 ' + res.status);
   const data = await res.json();
 
-  // 嘗試設定為「知道連結即可查看」(可選；失敗不影響)
+  // 嘗試設定為「知道連結即可查看」，方便預覽
   try {
     await gapi.client.drive.permissions.create({
       fileId: data.id,
