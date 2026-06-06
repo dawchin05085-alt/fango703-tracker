@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>汎高703館-零用金紀錄系統</title>
 
-<!-- Google Fonts: Noto Sans TC for clean Chinese rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -122,22 +121,30 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .btn-light { background: #f1f0f7; color: var(--text-main); }
 .btn-light:hover { background: #e7e5f2; }
 
-/* ---------- 統計卡 ---------- */
+/* ---------- 統計卡 (改為四格) ---------- */
 .stats {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 26px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 26px;
 }
+@media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
+
 .stat-card {
   background: var(--card-bg); border-radius: var(--radius); padding: 22px 24px;
   box-shadow: var(--shadow-md); position: relative; overflow: hidden;
   animation: fadeUp .5s ease both;
 }
-.stat-card:nth-child(2){ animation-delay:.07s } .stat-card:nth-child(3){ animation-delay:.14s }
+.stat-card:nth-child(2){ animation-delay:.07s } 
+.stat-card:nth-child(3){ animation-delay:.14s }
+.stat-card:nth-child(4){ animation-delay:.21s }
 .stat-card .label { font-size: 13px; color: var(--text-soft); font-weight: 500; margin-bottom: 8px; }
-.stat-card .value { font-size: 30px; font-weight: 900; letter-spacing: -.5px; }
+.stat-card .value { font-size: 28px; font-weight: 900; letter-spacing: -.5px; word-break: break-all; }
 .stat-card .bar { position:absolute; left:0; top:0; bottom:0; width:5px; }
-.stat-card:nth-child(1) .bar { background: var(--bg-grad-1); }
-.stat-card:nth-child(2) .bar { background: var(--cat-material); }
-.stat-card:nth-child(3) .bar { background: var(--ok); }
+
+/* 四個卡片的顏色配置 */
+.stat-card:nth-child(1) .bar { background: var(--ok); } /* 結餘: 綠色 */
+.stat-card:nth-child(2) .bar { background: var(--bg-grad-1); } /* 總撥款: 藍色 */
+.stat-card:nth-child(3) .bar { background: var(--err); } /* 支出: 紅色 */
+.stat-card:nth-child(4) .bar { background: var(--cat-material); } /* 筆數: 深藍 */
 
 /* ---------- 卡片 / 區塊 ---------- */
 .panel {
@@ -273,7 +280,6 @@ tbody tr:hover { background: #faf9ff; }
 @keyframes fadeUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform:none; } }
 
 @media (max-width: 720px) {
-  .stats { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   header.appbar { flex-direction: column; gap: 14px; align-items: flex-start; }
   .user-box { width: 100%; justify-content: space-between; }
@@ -282,13 +288,11 @@ tbody tr:hover { background: #faf9ff; }
 </head>
 <body>
 
-<!-- ===================== 啟動載入 ===================== -->
 <div id="bootLoader">
   <div class="spinner"></div>
   <div>正在載入 Google 服務…</div>
 </div>
 
-<!-- ===================== 登入畫面 ===================== -->
 <section id="loginScreen" class="hidden">
   <div class="login-card">
     <div class="logo">👷</div>
@@ -303,7 +307,6 @@ tbody tr:hover { background: #faf9ff; }
   </div>
 </section>
 
-<!-- ===================== 主應用 ===================== -->
 <main id="appScreen" class="wrap hidden">
 
   <header class="appbar">
@@ -320,19 +323,18 @@ tbody tr:hover { background: #faf9ff; }
     </div>
   </header>
 
-  <!-- 統計卡 -->
+  <!-- 四大數據看板 -->
   <section class="stats">
-    <div class="stat-card"><span class="bar"></span><div class="label">總支出</div><div class="value" id="statTotal">NT$0</div></div>
-    <div class="stat-card"><span class="bar"></span><div class="label">紀錄筆數</div><div class="value" id="statCount">0</div></div>
-    <div class="stat-card"><span class="bar"></span><div class="label">已同步</div><div class="value" id="statSynced">0</div></div>
+    <div class="stat-card"><span class="bar"></span><div class="label">目前可用結餘</div><div class="value" id="statBalance">NT$0</div></div>
+    <div class="stat-card"><span class="bar"></span><div class="label">公司總撥款</div><div class="value" id="statAllocated">NT$0</div></div>
+    <div class="stat-card"><span class="bar"></span><div class="label">累積支出金額</div><div class="value" id="statTotal">NT$0</div></div>
+    <div class="stat-card"><span class="bar"></span><div class="label">本機紀錄筆數</div><div class="value" id="statCount">0</div></div>
   </section>
 
-  <!-- 表單 -->
   <section class="panel">
     <h2>📝 新增零用金紀錄</h2>
     <p class="panel-sub">上傳發票/收據照片，系統會以 Google Vision API 自動辨識金額與日期；可隨時手動修改。</p>
 
-    <!-- 上傳區 -->
     <div class="field full" style="margin-bottom: 20px;">
       <label>發票 / 收據照片</label>
       <div class="dropzone" id="dropzone">
@@ -369,7 +371,6 @@ tbody tr:hover { background: #faf9ff; }
 
         <div class="field full" id="f-category">
           <label>類別 (工程部) <span class="req">*</span></label>
-          <!-- 快選按鈕取代傳統 select -->
           <div class="cat-group" id="categoryGroup">
             <button type="button" class="cat-btn" data-val="工程材料">工程材料</button>
             <button type="button" class="cat-btn" data-val="工具購置">工具購置</button>
@@ -377,7 +378,6 @@ tbody tr:hover { background: #faf9ff; }
             <button type="button" class="cat-btn" data-val="餐會點心">餐會點心</button>
             <button type="button" class="cat-btn" data-val="其他支出">其他支出</button>
           </div>
-          <!-- 隱藏欄位用來存取數值與驗證 -->
           <input type="hidden" id="category" required>
           <span class="err-msg">請點擊選擇上方一個類別</span>
         </div>
@@ -388,7 +388,6 @@ tbody tr:hover { background: #faf9ff; }
             <button type="button" id="clearVendorsBtn" class="clear-vendors">清除常用紀錄</button>
           </label>
           <input type="text" id="paidBy" maxlength="100" placeholder="未輸入將自動填入「 - 」">
-          <!-- 智慧記憶的廠商標籤會產生在這裡 -->
           <div class="vendor-tags" id="vendorTags"></div>
           <span class="err-msg">廠商名稱請勿超過 100 字</span>
         </div>
@@ -407,7 +406,6 @@ tbody tr:hover { background: #faf9ff; }
     </form>
   </section>
 
-  <!-- 紀錄列表 -->
   <section class="panel">
     <div class="flex-between" style="margin-bottom: 18px;">
       <div>
@@ -437,7 +435,6 @@ tbody tr:hover { background: #faf9ff; }
 
 <div class="toast-host" id="toastHost"></div>
 
-<!-- Google 平台腳本 -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js"></script>
 
@@ -446,11 +443,10 @@ tbody tr:hover { background: #faf9ff; }
    ⚙️  CONFIG — 已填入汎高科技有限公司的金鑰與指定雲端硬碟 ID
    ============================================================ */
 const CONFIG = {
-  CLIENT_ID: '701533078943-eepuoij9k5j4jd5sbqbrmmhjjoo41rip.apps.googleusercontent.com',
-  API_KEY:   'AIzaSyCBEfBSNjnENrbEWkkYiZXdjusJvmD-Wwo',
+  CLIENT_ID: '701533078943-eepuoij9k5j4jd5sbqbrmmhjjoo41rip.apps.googleusercontent.com', 
+  API_KEY:   'AIzaSyCBEfBSNjnENrbEWkkYiZXdjusJvmD-Wwo',                             
   SHEET_ID:  '1E0NR4KEyVl5ZHqiPmgQ4SZMpUUhL711uDzBUZ3lUI_A',
-  // dc 指定的專屬資料夾 ID (供所有上傳的照片存放)
-  DRIVE_FOLDER_ID: '1fLXiMH2E2SSiUmicBFXjylNmxdBI-W5K'
+  DRIVE_FOLDER_ID: '1fLXiMH2E2SSiUmicBFXjylNmxdBI-W5K'  
 };
 
 const SCOPES = [
@@ -480,8 +476,8 @@ const state = {
   tokenClient: null,
   accessToken: null,
   userEmail: null,
-  records: [],          // { date, category, amount, paidBy, description, photoUrl, time, ocrMethod, synced }
-  currentFile: null,    // { file, base64, isPdf }
+  records: [],          
+  currentFile: null,    
   ocrMethod: '手動輸入',
   savedVendors: JSON.parse(localStorage.getItem(LS_VENDORS) || '["中油", "振宇五金", "7-11"]'),
 };
@@ -496,7 +492,6 @@ const isConfigured = () =>
   !CONFIG.API_KEY.startsWith('your-') &&
   !CONFIG.SHEET_ID.startsWith('your-');
 
-// 工程部專屬類別顏色
 const CAT_COLORS = { 
   '工程材料':'var(--cat-material)', 
   '工具購置':'var(--cat-tool)', 
@@ -516,7 +511,7 @@ function toast(msg, type = 'info', ms = 4000) {
 }
 
 /* ============================================================
-   Google API 初始化與無感自動登入
+   Google API 初始化與自動登入
    ============================================================ */
 function maybeBoot() {
   if (window.gapi && !state._gapiLoadCalled) {
@@ -572,24 +567,20 @@ function renderSignInButton() {
   host.appendChild(btn);
 }
 
-// 檢查是否可以跳過登入畫面直接進入 (1 小時免登入機制)
 function checkAutoLogin() {
   const token = localStorage.getItem(LS_TOKEN);
   const expire = localStorage.getItem(LS_TOKEN_EXPIRE);
   
-  // 若 Token 存在且距離過期還大於 1 分鐘 (60000ms)，直接使用
   if (token && expire && Date.now() < parseInt(expire) - 60000) {
     state.accessToken = token;
     gapi.client.setToken({ access_token: token });
     
-    // 取得使用者信箱並進入畫面 (靜默進行)
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: 'Bearer ' + token }
     }).then(r => r.json()).then(info => {
       state.userEmail = info.email || '已登入使用者';
-      enterApp(true); // 傳入 true 代表是自動登入，不彈跳成功提示
+      enterApp(true); 
     }).catch(() => {
-      // Token 若失效則重新登入
       showLogin();
     });
   } else {
@@ -615,7 +606,6 @@ async function handleTokenResponse(resp) {
   state.accessToken = resp.access_token;
   gapi.client.setToken({ access_token: resp.access_token });
   
-  // 記錄到手機/電腦以實現無感登入 (Token 時效通常為 3599 秒)
   const expiresIn = resp.expires_in || 3599;
   localStorage.setItem(LS_TOKEN, state.accessToken);
   localStorage.setItem(LS_TOKEN_EXPIRE, Date.now() + (expiresIn * 1000));
@@ -636,7 +626,7 @@ function enterApp(isAutoLogin = false) {
   $('userEmail').textContent = state.userEmail;
   loadPendingFromLocal();
   renderRecords();
-  renderStats();
+  renderStats(); // 內含抓取 Excel 最新結餘功能
   if (!isAutoLogin) toast('登入成功，歡迎使用！', 'ok');
 }
 
@@ -648,7 +638,6 @@ function logout() {
   state.userEmail = null;
   gapi.client.setToken(null);
   
-  // 清除本地登入記憶
   localStorage.removeItem(LS_TOKEN);
   localStorage.removeItem(LS_TOKEN_EXPIRE);
   
@@ -664,7 +653,42 @@ function showLogin() {
 }
 
 /* ============================================================
-   照片上傳 + Vision API OCR
+   🔄 智慧雙向讀取：從「結算總表」抓取各項數據 (撥款, 支出, 結餘)
+   ============================================================ */
+async function fetchExcelBalances() {
+  if (!state.accessToken) return;
+  try {
+    // 讀取 結算總表 的 E2(總撥款), E3(累積支出), E4(可用結餘)
+    const resp = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.SHEET_ID,
+      range: '結算總表!E2:E4',
+    });
+    const rows = resp.result.values;
+    if (rows && rows.length > 0) {
+      // 安全解析，如果某列沒填數字會預設為 0
+      const totalAllocated = rows[0] ? parseFloat(rows[0][0]) || 0 : 0;
+      const totalExpenseFromExcel = rows[1] ? parseFloat(rows[1][0]) || 0 : 0;
+      const currentBalanceFromExcel = rows[2] ? parseFloat(rows[2][0]) || 0 : 0;
+      
+      // 動態更新網頁頂部的儀表板數字
+      animateNumber($('statAllocated'), totalAllocated, true);
+      animateNumber($('statTotal'), totalExpenseFromExcel, true);
+      animateNumber($('statBalance'), currentBalanceFromExcel, true);
+      return;
+    }
+  } catch (e) {
+    console.warn('無法讀取「結算總表」分頁（可能尚未建立或未填寫），將降級採用本機獨立加總模式', e.message);
+  }
+
+  // 降級保護：若讀不到總表，則採取純前端加總，其他數字顯示提示文字
+  const localTotal = state.records.reduce((s, r) => s + Number(r.amount || 0), 0);
+  animateNumber($('statTotal'), localTotal, true);
+  $('statBalance').innerHTML = `<span style="font-size:14px;color:var(--text-soft);">請至Sheet設定總表</span>`;
+  $('statAllocated').innerHTML = `<span style="font-size:14px;color:var(--text-soft);">未設定</span>`;
+}
+
+/* ============================================================
+   照片上傳 + Vision API OCR (金額與日期雙效識讀)
    ============================================================ */
 function setupUpload() {
   const dz = $('dropzone');
@@ -692,14 +716,12 @@ async function handleFile(file) {
   const isPdf = file.type === 'application/pdf';
   state.currentFile = { file, base64, isPdf };
 
-  // 預覽
   const media = $('previewMedia');
   media.innerHTML = isPdf
     ? `<div class="pdf-chip"><span style="font-size:30px;">📄</span><span>PDF 檔案</span></div>`
     : `<img src="data:${file.type};base64,${base64}" alt="預覽">`;
   $('preview').style.display = 'flex';
 
-  // OCR
   if (isPdf) {
     setOcrStatus('warn', 'PDF 無法自動辨識金額與日期，請手動輸入');
     return;
@@ -748,14 +770,12 @@ async function runOcr(base64) {
     const ann = data.responses?.[0]?.textAnnotations;
     const fullText = ann && ann.length ? ann[0].description : '';
     
-    // 同時辨識金額與日期
     const { best, candidates } = extractAmount(fullText);
     const extractedDate = extractDate(fullText);
 
     let foundSomething = false;
     let msgParts = [];
 
-    // 處理金額
     if (best != null) {
       $('amount').value = best;
       $('f-amount').classList.add('ocr-filled');
@@ -765,7 +785,6 @@ async function runOcr(base64) {
       foundSomething = true;
     }
 
-    // 處理日期
     if (extractedDate) {
       $('recordDate').value = extractedDate;
       $('f-date').classList.add('ocr-filled');
@@ -775,7 +794,6 @@ async function runOcr(base64) {
       foundSomething = true;
     }
 
-    // 更新狀態顯示
     if (foundSomething) {
       state.ocrMethod = 'Vision API 識別';
       setOcrStatus('ok', `✓ 識別成功，已填入：${msgParts.join(' 與 ')}`);
@@ -790,7 +808,6 @@ async function runOcr(base64) {
   }
 }
 
-// 顯示其他候選金額供使用者點選
 function renderCandidates(candidates, chosen) {
   const host = $('ocrCandidates');
   const others = [...new Set(candidates)].filter(c => c !== chosen).slice(0, 6);
@@ -810,15 +827,12 @@ function renderCandidates(candidates, chosen) {
   });
 }
 
-/* 金額擷取：關鍵字優先 → 貨幣符號 → 最大合理數字 */
 function extractAmount(text) {
   if (!text) return { best: null, candidates: [] };
-
   const cleanNum = (s) => {
     const n = parseFloat(String(s).replace(/[,，\s]/g, ''));
     return isNaN(n) ? null : Math.round(n);
   };
-  // 排除明顯非金額：發票/統編(8碼)、電話、年份、百分比
   const plausible = (n) => n != null && n > 0 && n <= 1000000;
 
   const lines = text.split(/\n/);
@@ -834,10 +848,8 @@ function extractAmount(text) {
     numPattern.lastIndex = 0;
     while ((m = numPattern.exec(line)) !== null) {
       const raw = m[1];
-      // 跳過含 % 的數字
       const after = line.slice(m.index + m[0].length, m.index + m[0].length + 1);
       if (after === '%' || after === '％') continue;
-      // 跳過看似日期 (純 8 碼或含 /-) 的情況交給 plausible 過濾
       const val = cleanNum(raw);
       if (!plausible(val)) continue;
       candidates.push(val);
@@ -847,7 +859,6 @@ function extractAmount(text) {
 
   let best = null;
   if (keywordHits.length) {
-    // 關鍵字附近：取最大者（通常合計最大）
     best = Math.max(...keywordHits);
   } else if (candidates.length) {
     best = Math.max(...candidates);
@@ -855,17 +866,12 @@ function extractAmount(text) {
   return { best, candidates };
 }
 
-/* 日期擷取：同時支援民國年 (112-05-24) 與西元年 (2023/05/24) */
 function extractDate(text) {
   if (!text) return null;
-  // 第一組: 民國年 (1xx), 第二組: 西元年 (20xx)
-  // 分隔符號: - / 年 . 月 日
   const regex = /(?:(1\d{2})|(20\d{2}))\s*[-/年\.]\s*(0?[1-9]|1[0-2])\s*[-/月\.]\s*(0?[1-9]|[12]\d|3[01])日?/g;
-  
   let match;
   let candidates = [];
   
-  // 建立今日的字串作為上限參考
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
   const todayStr = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
@@ -876,13 +882,10 @@ function extractDate(text) {
     let day = p(parseInt(match[4]));
     let dateStr = `${year}-${month}-${day}`;
     
-    // 確保日期不晚於今天，且是合理年份
     if (dateStr <= todayStr && year >= 2000) {
       candidates.push(dateStr);
     }
   }
-  
-  // 回傳找到的第一個合理日期 (發票通常日期在最上面)
   return candidates.length > 0 ? candidates[0] : null;
 }
 
@@ -918,16 +921,10 @@ function renderVendorTags() {
 }
 
 function saveVendorToLocal(vendorName) {
-  // 如果是空白、或者是 '-' 就不儲存
   if (!vendorName || vendorName === '-') return;
-  
-  // 移除重複的，並把最新的推到陣列最前面
   state.savedVendors = state.savedVendors.filter(v => v !== vendorName);
   state.savedVendors.unshift(vendorName);
-  
-  // 最多記憶 10 筆
   if (state.savedVendors.length > 10) state.savedVendors.pop();
-  
   localStorage.setItem(LS_VENDORS, JSON.stringify(state.savedVendors));
   renderVendorTags();
 }
@@ -944,12 +941,10 @@ function clearSavedVendors() {
    表單驗證 + 提交
    ============================================================ */
 function setupForm() {
-  // 預設日期為今天，並限制最大值
   const today = new Date().toISOString().split('T')[0];
   $('recordDate').value = today;
   $('recordDate').max = today;
 
-  // 類別快選按鈕邏輯
   document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -959,10 +954,8 @@ function setupForm() {
     });
   });
 
-  // 渲染智慧標籤
   renderVendorTags();
   $('clearVendorsBtn').addEventListener('click', clearSavedVendors);
-
   $('description').addEventListener('input', (e) => { $('descCount').textContent = e.target.value.length; });
   $('recordForm').addEventListener('submit', onSubmit);
   $('resetBtn').addEventListener('click', resetForm);
@@ -982,7 +975,6 @@ function validate() {
 
   setErr('f-category', !$('category').value);
 
-  // 廠商名稱放寬：如果不填，就直接略過錯誤，稍後 onSubmit 自動補 '-'
   const paidBy = $('paidBy').value.trim();
   setErr('f-paidBy', paidBy.length > 100); 
 
@@ -997,12 +989,11 @@ async function onSubmit(e) {
   saveBtn.disabled = true;
   saveBtn.textContent = '處理中…';
 
-  // 防呆：沒填廠商名稱自動補 '-'
   const finalPaidBy = $('paidBy').value.trim() || '-';
 
   const record = {
     date: $('recordDate').value,
-    category: $('category').value,
+    category: TypoFix($('category').value), 
     amount: Math.round(parseFloat($('amount').value)),
     paidBy: finalPaidBy,
     description: $('description').value.trim(),
@@ -1013,7 +1004,6 @@ async function onSubmit(e) {
   };
 
   try {
-    // 1) 上傳照片到指定 Drive 資料夾
     let photoUrl = '';
     if (state.currentFile) {
       try {
@@ -1025,19 +1015,16 @@ async function onSubmit(e) {
       }
     }
 
-    // 2) 寫入 Sheet（含重試）
     const synced = await appendToSheetWithRetry(record);
     record.synced = synced;
 
-    // 3) 更新本地狀態
     state.records.unshift(record);
     if (!synced) savePendingToLocal();
 
-    // 4) 儲存常用廠商名稱到手機/電腦記憶體
     saveVendorToLocal(finalPaidBy);
 
     renderRecords();
-    renderStats();
+    renderStats(); // 儲存成功，自動觸發重新讀取 Excel 最新結餘
     resetForm();
     toast(synced ? '紀錄已儲存並同步至 Google Sheet！' : '紀錄已暫存於本機，稍後將自動重試同步。', synced ? 'ok' : 'warn', 5000);
   } catch (err) {
@@ -1049,13 +1036,16 @@ async function onSubmit(e) {
   }
 }
 
+function TypoFix(val) {
+  return val; 
+}
+
 function resetForm() {
   $('recordForm').reset();
   const today = new Date().toISOString().split('T')[0];
   $('recordDate').value = today;
   $('descCount').textContent = '0';
   
-  // 清除分類按鈕的高亮狀態
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   $('category').value = '';
 
@@ -1075,7 +1065,6 @@ function formatNow() {
    Google Drive — 直接上傳至 dc 指定資料夾
    ============================================================ */
 async function uploadToDrive(file) {
-  // 直接使用 CONFIG 內寫死的指定資料夾 ID
   const folderId = CONFIG.DRIVE_FOLDER_ID;
   const fileName = `receipt_${Date.now()}_${file.name}`;
 
@@ -1104,13 +1093,12 @@ async function uploadToDrive(file) {
   if (!res.ok) throw new Error('Drive 上傳回應 ' + res.status);
   const data = await res.json();
 
-  // 嘗試設定為「知道連結即可查看」，方便預覽
   try {
     await gapi.client.drive.permissions.create({
       fileId: data.id,
       resource: { role: 'reader', type: 'anyone' },
     });
-  } catch (e) { /* 忽略：可能受限於組織政策 */ }
+  } catch (e) {}
 
   return data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`;
 }
@@ -1181,7 +1169,6 @@ async function retryPending() {
   toast(`已成功同步 ${done} / ${pending.length} 筆`, done === pending.length ? 'ok' : 'warn');
 }
 
-// 每 30 秒自動重試
 setInterval(() => {
   if (state.accessToken && state.records.some(r => !r.synced)) {
     retryPending();
@@ -1192,11 +1179,11 @@ setInterval(() => {
    渲染：統計 + 列表
    ============================================================ */
 function renderStats() {
-  const total = state.records.reduce((s, r) => s + Number(r.amount || 0), 0);
-  const synced = state.records.filter(r => r.synced).length;
-  animateNumber($('statTotal'), total, true);
+  // 1. 渲染本機已記錄總筆數
   animateNumber($('statCount'), state.records.length, false);
-  animateNumber($('statSynced'), synced, false);
+  
+  // 2. 向 Google 讀取最新結餘與累積支出 (非同步進行)
+  fetchExcelBalances();
 }
 
 function animateNumber(el, target, money) {
@@ -1205,7 +1192,7 @@ function animateNumber(el, target, money) {
   function step(now) {
     const p = Math.min((now - t0) / dur, 1);
     const val = Math.round(start + (target - start) * p);
-    el.textContent = money ? fmtMoney(val) : val;
+    el.innerHTML = money ? fmtMoney(val) : val;
     if (p < 1) requestAnimationFrame(step);
     else el.dataset.val = target;
   }
@@ -1220,7 +1207,6 @@ function renderRecords() {
   const body = $('recordsBody');
   const empty = $('emptyState');
 
-  // 依日期 + 時間排序（新到舊）
   const sorted = [...state.records].sort((a, b) =>
     (b.date + (b.time||'')).localeCompare(a.date + (a.time||''))
   );
@@ -1246,7 +1232,7 @@ function renderRecords() {
 }
 
 function catLabel(c) {
-  return c; // 已經在 HTML option 中定義完整的選項文字了，直接回傳即可
+  return c; 
 }
 
 /* ============================================================
@@ -1258,16 +1244,13 @@ window.addEventListener('load', () => {
   $('logoutBtn').addEventListener('click', logout);
 
   if (!isConfigured()) {
-    // 未設定憑證：直接顯示登入畫面與警告，不嘗試初始化
     setTimeout(showLogin, 400);
     return;
   }
-  // 嘗試初始化（兩個腳本可能尚未載入完成，輪詢）
   const poll = setInterval(() => {
     maybeBoot();
     if (state.gapiReady && state.gisReady) clearInterval(poll);
   }, 150);
-  // 安全逾時
   setTimeout(() => {
     clearInterval(poll);
     if (!(state.gapiReady && state.gisReady)) {
