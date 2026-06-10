@@ -672,19 +672,18 @@ function showLogin() {
    ============================================================ */
 async function fetchExcelBalances() {
   if (!state.accessToken) return;
+  let readError = null; // 紀錄失敗原因，方便提示使用者
   try {
-    // 讀取 結算總表 的 E2(總撥款), E3(累積支出), E4(可用結餘)
+    // 讀取 結算總表 的 G5(公司撥款總額), G6(累積總支出), G7(目前可用結餘)
     // valueRenderOption: 'UNFORMATTED_VALUE' → 取「原始數值」而非格式化字串，
-    // 避免儲存格設了千分位（例如 153,000）時被 parseFloat 在逗號處截斷成 153。
+    // 避免儲存格設了千分位或 NT$（例如 153,286、NT$82,538）時被 parseFloat 截斷。
     const resp = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: CONFIG.SHEET_ID,
-      range: '結算總表!E2:E4',
+      range: '結算總表!G5:G7',
       valueRenderOption: 'UNFORMATTED_VALUE',
     });
     const rows = resp.result.values;
-    if (rows && rows.length > 0) {
-      // 安全解析：先去掉 NT$、逗號、空白等非數字字元，再轉成數值。
-      // 這樣即使儲存格是文字格式的 "153,000" 也能正確讀成 153000。
+    if (rows && rows.length > 0 && rows.some(r => r && r[0] !== '' && r[0] != null)) {
       const parseCell = (cell) => {
         if (cell == null) return 0;
         if (typeof cell === 'number') return cell;
@@ -694,22 +693,36 @@ async function fetchExcelBalances() {
       const totalAllocated = rows[0] ? parseCell(rows[0][0]) : 0;
       const totalExpenseFromExcel = rows[1] ? parseCell(rows[1][0]) : 0;
       const currentBalanceFromExcel = rows[2] ? parseCell(rows[2][0]) : 0;
-      
-      // 動態更新網頁頂部的儀表板數字
+
       animateNumber($('statAllocated'), totalAllocated, true);
       animateNumber($('statTotal'), totalExpenseFromExcel, true);
       animateNumber($('statBalance'), currentBalanceFromExcel, true);
+      state._balanceWarned = false; // 讀取成功，重置提示旗標
       return;
     }
+    // 有連到分頁，但 G5:G7 是空白
+    readError = '已連到「結算總表」分頁，但 G5、G6、G7 沒有數字。請在 G5 填公司撥款總額、G6 填累積總支出、G7 填目前可用結餘。';
   } catch (e) {
-    console.warn('無法讀取「結算總表」分頁（可能尚未建立或未填寫），將降級採用本機獨立加總模式', e.message);
+    const msg = (e && e.result && e.result.error && e.result.error.message) || (e && e.message) || String(e);
+    if (/unable to parse range|not found|找不到/i.test(msg)) {
+      readError = '在試算表裡找不到名為「結算總表」的分頁。請確認分頁名稱完全相符（不要有多餘空白），或在下方分頁列建立此分頁。';
+    } else if (/\b401\b|\b403\b|permission|unauthor|invalid.*credential/i.test(msg)) {
+      readError = '讀取權限不足或登入已逾期，請按右上角「登出」再重新登入一次。';
+    } else {
+      readError = '讀取「結算總表」失敗：' + msg;
+    }
+    console.warn('fetchExcelBalances 失敗：', msg);
   }
 
-  // 降級保護：若讀不到總表，則採取純前端加總，其他數字顯示提示文字
+  // 降級保護：讀不到總表時，支出改用本機加總，其餘顯示提示文字
   const localTotal = state.records.reduce((s, r) => s + Number(r.amount || 0), 0);
   animateNumber($('statTotal'), localTotal, true);
   $('statBalance').innerHTML = `<span style="font-size:14px;color:var(--text-soft);">請至Sheet設定總表</span>`;
   $('statAllocated').innerHTML = `<span style="font-size:14px;color:var(--text-soft);">未設定</span>`;
+  if (readError && !state._balanceWarned) {
+    state._balanceWarned = true; // 同一次只提示一次，避免洗版
+    toast(readError, 'warn', 9000);
+  }
 }
 
 /* ============================================================
