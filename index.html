@@ -339,7 +339,7 @@ tbody tr:hover { background: #faf9ff; }
       <label>發票 / 收據照片</label>
       <div class="dropzone" id="dropzone">
         <div class="dz-icon">📷</div>
-        <div class="dz-text">點擊或拖曳照片到此處上傳</div>
+        <div class="dz-text">點擊、拖曳，或直接貼上（Ctrl / ⌘ + V）照片</div>
         <div class="dz-sub">支援 JPG、PNG、PDF · 上限 25MB</div>
       </div>
       <input type="file" id="fileInput" accept="image/jpeg,image/png,application/pdf" class="hidden">
@@ -659,16 +659,26 @@ async function fetchExcelBalances() {
   if (!state.accessToken) return;
   try {
     // 讀取 結算總表 的 E2(總撥款), E3(累積支出), E4(可用結餘)
+    // valueRenderOption: 'UNFORMATTED_VALUE' → 取「原始數值」而非格式化字串，
+    // 避免儲存格設了千分位（例如 153,000）時被 parseFloat 在逗號處截斷成 153。
     const resp = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: CONFIG.SHEET_ID,
       range: '結算總表!E2:E4',
+      valueRenderOption: 'UNFORMATTED_VALUE',
     });
     const rows = resp.result.values;
     if (rows && rows.length > 0) {
-      // 安全解析，如果某列沒填數字會預設為 0
-      const totalAllocated = rows[0] ? parseFloat(rows[0][0]) || 0 : 0;
-      const totalExpenseFromExcel = rows[1] ? parseFloat(rows[1][0]) || 0 : 0;
-      const currentBalanceFromExcel = rows[2] ? parseFloat(rows[2][0]) || 0 : 0;
+      // 安全解析：先去掉 NT$、逗號、空白等非數字字元，再轉成數值。
+      // 這樣即使儲存格是文字格式的 "153,000" 也能正確讀成 153000。
+      const parseCell = (cell) => {
+        if (cell == null) return 0;
+        if (typeof cell === 'number') return cell;
+        const n = parseFloat(String(cell).replace(/[^0-9.\-]/g, ''));
+        return isNaN(n) ? 0 : n;
+      };
+      const totalAllocated = rows[0] ? parseCell(rows[0][0]) : 0;
+      const totalExpenseFromExcel = rows[1] ? parseCell(rows[1][0]) : 0;
+      const currentBalanceFromExcel = rows[2] ? parseCell(rows[2][0]) : 0;
       
       // 動態更新網頁頂部的儀表板數字
       animateNumber($('statAllocated'), totalAllocated, true);
@@ -703,6 +713,29 @@ function setupUpload() {
   });
   input.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
   $('removeFileBtn').addEventListener('click', clearFile);
+
+  // 📋 支援從剪貼簿貼上圖片：
+  //   - 用螢幕截圖工具（Win+Shift+S、⌘+Shift+4 等）截好後直接貼
+  //   - 在相簿、檔案總管、其他網頁上「複製圖片」後貼
+  // 只要焦點在本頁，按 Ctrl/⌘ + V 即可上傳並辨識。
+  window.addEventListener('paste', (e) => {
+    if ($('appScreen').classList.contains('hidden')) return; // 尚未進入主畫面則略過
+    const items = (e.clipboardData || window.clipboardData)?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type && item.type.indexOf('image') === 0) {
+        const blob = item.getAsFile();
+        if (blob) {
+          const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+          const named = new File([blob], `pasted_${Date.now()}.${ext}`, { type: blob.type });
+          toast('已貼上剪貼簿圖片，辨識中…', 'info');
+          handleFile(named);
+          e.preventDefault();
+        }
+        break;
+      }
+    }
+  });
 }
 
 const MAX_FILE = 25 * 1024 * 1024;
