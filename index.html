@@ -196,6 +196,11 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .vendor-tag:hover { background: #e7e5f2; }
 .clear-vendors { font-size: 11px; color: var(--text-soft); cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; margin-left: auto; }
 
+/* 免用發票切換 */
+.exempt-toggle { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-soft); display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+.exempt-toggle input { width: auto; cursor: pointer; }
+.field input:disabled { background: #f1f1f4; color: #9ca3af; cursor: not-allowed; border-color: var(--border); box-shadow: none; }
+
 /* OCR 欄位動態高亮 (Vision API 填入時) */
 .field.ocr-filled input {
   border-color: var(--ok); box-shadow: 0 0 0 3px rgba(76,175,80,.18);
@@ -369,6 +374,15 @@ tbody tr:hover { background: #faf9ff; }
           <span class="err-msg">請輸入 1 ～ 1,000,000 之間的金額</span>
         </div>
 
+        <div class="field full" id="f-invoice">
+          <label style="display:flex; align-items:center;">
+            發票號碼
+            <label class="exempt-toggle"><input type="checkbox" id="invoiceExempt"> 免用統一發票（無發票號碼）</label>
+          </label>
+          <input type="text" id="invoiceNumber" maxlength="20" placeholder="例：AB-12345678（可自動辨識或手動輸入）">
+          <span class="hint" id="invoiceHint">選填，系統會自動嘗試辨識統一發票號碼</span>
+        </div>
+
         <div class="field full" id="f-category">
           <label>類別 (工程部) <span class="req">*</span></label>
           <div class="cat-group" id="categoryGroup">
@@ -418,7 +432,7 @@ tbody tr:hover { background: #faf9ff; }
       <table>
         <thead>
           <tr>
-            <th>日期</th><th>類別</th><th>金額</th><th>收據人</th>
+            <th>日期</th><th>類別</th><th>金額</th><th>發票號碼</th><th>收據人</th>
             <th>說明</th><th>照片</th><th>狀態</th>
           </tr>
         </thead>
@@ -461,7 +475,7 @@ const DISCOVERY_DOCS = [
   'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
 ];
 
-const SHEET_RANGE = 'Sheet1!A:H';
+const SHEET_RANGE = 'Sheet1!A:I';
 const LS_PENDING = 'cat_pending_records_v1';
 const LS_VENDORS = 'fango_vendors_v1';
 const LS_TOKEN = 'cat_token_v1';
@@ -805,6 +819,7 @@ async function runOcr(base64) {
     
     const { best, candidates } = extractAmount(fullText);
     const extractedDate = extractDate(fullText);
+    const extractedInvoice = extractInvoiceNumber(fullText);
 
     let foundSomething = false;
     let msgParts = [];
@@ -824,6 +839,17 @@ async function runOcr(base64) {
       setTimeout(() => $('f-date').classList.remove('ocr-filled'), 1400);
       $('dateHint').textContent = '由 Vision API 自動填入，可手動修改';
       msgParts.push(`日期 <b>${extractedDate}</b>`);
+      foundSomething = true;
+    }
+
+    if (extractedInvoice) {
+      $('invoiceExempt').checked = false;
+      $('invoiceNumber').disabled = false;
+      $('invoiceNumber').value = extractedInvoice;
+      $('f-invoice').classList.add('ocr-filled');
+      setTimeout(() => $('f-invoice').classList.remove('ocr-filled'), 1400);
+      $('invoiceHint').textContent = '由 Vision API 自動填入，可手動修改';
+      msgParts.push(`發票號碼 <b>${extractedInvoice}</b>`);
       foundSomething = true;
     }
 
@@ -922,6 +948,19 @@ function extractDate(text) {
   return candidates.length > 0 ? candidates[0] : null;
 }
 
+function extractInvoiceNumber(text) {
+  if (!text) return null;
+  // 台灣統一發票號碼格式：2 個大寫英文字母（字軌）+ 8 位數字
+  // 常見排版：AB-12345678、AB 12345678、AB12345678
+  // 用負向後查確保字母前面不是其他英文字母（避免把 TWD12345678 誤抓成 WD12345678）
+  const regex = /(?<![A-Za-z])([A-Z]{2})[\s\-]?(\d{8})(?!\d)/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    return `${match[1]}-${match[2]}`; // 統一正規化為 AB-12345678
+  }
+  return null;
+}
+
 function clearFile() {
   state.currentFile = null;
   state.ocrMethod = '手動輸入';
@@ -989,6 +1028,20 @@ function setupForm() {
 
   renderVendorTags();
   $('clearVendorsBtn').addEventListener('click', clearSavedVendors);
+  $('invoiceExempt').addEventListener('change', (e) => {
+    const inp = $('invoiceNumber');
+    if (e.target.checked) {
+      inp.value = '';
+      inp.disabled = true;
+      inp.placeholder = '已標記為免用統一發票';
+      $('f-invoice').classList.remove('ocr-filled');
+      $('invoiceHint').textContent = '此筆已標記為「免用統一發票」，不需填發票號碼';
+    } else {
+      inp.disabled = false;
+      inp.placeholder = '例：AB-12345678（可自動辨識或手動輸入）';
+      $('invoiceHint').textContent = '選填，系統會自動嘗試辨識統一發票號碼';
+    }
+  });
   $('description').addEventListener('input', (e) => { $('descCount').textContent = e.target.value.length; });
   $('recordForm').addEventListener('submit', onSubmit);
   $('resetBtn').addEventListener('click', resetForm);
@@ -1023,11 +1076,13 @@ async function onSubmit(e) {
   saveBtn.textContent = '處理中…';
 
   const finalPaidBy = $('paidBy').value.trim() || '-';
+  const finalInvoice = $('invoiceExempt').checked ? '免用發票' : $('invoiceNumber').value.trim();
 
   const record = {
     date: $('recordDate').value,
     category: TypoFix($('category').value), 
     amount: Math.round(parseFloat($('amount').value)),
+    invoiceNumber: finalInvoice,
     paidBy: finalPaidBy,
     description: $('description').value.trim(),
     photoUrl: '',
@@ -1085,6 +1140,11 @@ function resetForm() {
   ['f-date','f-amount','f-category','f-paidBy'].forEach(id => $(id).classList.remove('invalid'));
   $('amountHint').textContent = '預設手動輸入';
   $('dateHint').textContent = '預設為今日，可手動修改';
+  $('invoiceHint').textContent = '選填，系統會自動嘗試辨識統一發票號碼';
+  $('f-invoice').classList.remove('ocr-filled');
+  $('invoiceExempt').checked = false;
+  $('invoiceNumber').disabled = false;
+  $('invoiceNumber').placeholder = '例：AB-12345678（可自動辨識或手動輸入）';
   clearFile();
 }
 
@@ -1148,7 +1208,8 @@ async function appendToSheet(record) {
     resource: {
       values: [[
         record.date, record.category, record.amount, record.paidBy,
-        record.description, record.photoUrl, record.time, record.ocrMethod
+        record.description, record.photoUrl, record.time, record.ocrMethod,
+        record.invoiceNumber || ''
       ]]
     }
   });
@@ -1256,6 +1317,9 @@ function renderRecords() {
       <td>${escapeHtml(r.date)}</td>
       <td><span class="cat-tag" style="background:${CAT_COLORS[r.category] || '#888'}">${escapeHtml(catLabel(r.category))}</span></td>
       <td class="amount-cell">${fmtMoney(r.amount)}</td>
+      <td>${r.invoiceNumber === '免用發票'
+        ? '<span class="cat-tag" style="background:#9ca3af">免用發票</span>'
+        : (escapeHtml(r.invoiceNumber) || '<span class="muted">—</span>')}</td>
       <td>${escapeHtml(r.paidBy)}</td>
       <td style="max-width:220px;">${escapeHtml(r.description) || '<span class="muted">—</span>'}</td>
       <td class="link-cell">${r.photoUrl ? `<a href="${escapeHtml(r.photoUrl)}" target="_blank" rel="noopener">檢視 ↗</a>` : '<span class="muted">無</span>'}</td>
