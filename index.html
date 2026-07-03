@@ -25,12 +25,14 @@
   --shadow-md: 0 6px 24px rgba(0,0,0,.10);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.18);
 
-  --cat-material: #1976d2; 
-  --cat-tool: #7b1fa2;     
-  --cat-gas: #f57c00;      
-  --cat-meal: #e91e63;     
-  --cat-other: #388e3c;    
+  /* 類別顏色 (客製化工程部) */
+  --cat-material: #1976d2;  /* 工程材料 */
+  --cat-tool: #7b1fa2;      /* 工具購置 */
+  --cat-gas: #f57c00;       /* 車輛加油 */
+  --cat-meal: #e91e63;      /* 餐會點心 */
+  --cat-other: #388e3c;     /* 其他 */
 
+  /* 狀態色 */
   --ok: #4caf50;
   --warn: #ff9800;
   --err: #f44336;
@@ -49,6 +51,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ---------- 載入遮罩 ---------- */
 #bootLoader {
   position: fixed; inset: 0; z-index: 9999;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -62,9 +65,13 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---------- 通用容器 ---------- */
 .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
 
-#loginScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+/* ---------- 登入畫面 ---------- */
+#loginScreen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+}
 .login-card {
   background: var(--card-bg); border-radius: 22px; box-shadow: var(--shadow-lg);
   padding: 48px 40px; max-width: 420px; width: 100%; text-align: center;
@@ -85,6 +92,7 @@ body {
   display: none;
 }
 
+/* ---------- 頂部列 ---------- */
 header.appbar {
   display: flex; align-items: center; justify-content: space-between;
   background: rgba(255,255,255,.14); backdrop-filter: blur(8px);
@@ -112,11 +120,11 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .btn-primary:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn-light { background: #f1f0f7; color: var(--text-main); }
 .btn-light:hover { background: #e7e5f2; }
-.btn-success { background: var(--ok); color: #fff; box-shadow: var(--shadow-sm); }
-.btn-success:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.btn-success:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
 
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 26px; }
+/* ---------- 統計卡 (改為四格) ---------- */
+.stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 26px;
+}
 @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
 
@@ -132,11 +140,13 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .stat-card .value { font-size: 28px; font-weight: 900; letter-spacing: -.5px; word-break: break-all; }
 .stat-card .bar { position:absolute; left:0; top:0; bottom:0; width:5px; }
 
-.stat-card:nth-child(1) .bar { background: var(--ok); }
-.stat-card:nth-child(2) .bar { background: var(--bg-grad-1); }
-.stat-card:nth-child(3) .bar { background: var(--err); }
-.stat-card:nth-child(4) .bar { background: var(--cat-material); }
+/* 四個卡片的顏色配置 */
+.stat-card:nth-child(1) .bar { background: var(--ok); } /* 結餘: 綠色 */
+.stat-card:nth-child(2) .bar { background: var(--bg-grad-1); } /* 總撥款: 藍色 */
+.stat-card:nth-child(3) .bar { background: var(--err); } /* 支出: 紅色 */
+.stat-card:nth-child(4) .bar { background: var(--cat-material); } /* 筆數: 深藍 */
 
+/* ---------- 卡片 / 區塊 ---------- */
 .panel {
   background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-md);
   padding: 26px 28px; margin-bottom: 26px; animation: fadeUp .5s ease both;
@@ -144,6 +154,7 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .panel h2 { font-size: 17px; font-weight: 900; margin-bottom: 4px; display:flex; align-items:center; gap:8px; }
 .panel .panel-sub { font-size: 13px; color: var(--text-soft); margin-bottom: 20px; }
 
+/* ---------- 表單 ---------- */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .field { display: flex; flex-direction: column; gap: 6px; position: relative; }
 .field.full { grid-column: 1 / -1; }
@@ -163,6 +174,7 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .field.invalid input, .field.invalid select { border-color: var(--err); }
 .field.invalid .err-msg { display: block; }
 
+/* 快選按鈕 (類別) */
 .cat-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .cat-btn {
   flex: 1 1 calc(33.333% - 8px); text-align: center; background: #fbfbfd;
@@ -174,6 +186,7 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .cat-btn:hover { border-color: var(--accent); color: var(--accent); }
 .cat-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
 
+/* 快選標籤 (廠商) */
 .vendor-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .vendor-tag {
   background: #f1f0f7; color: var(--accent); border: none; border-radius: 999px;
@@ -183,16 +196,19 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .vendor-tag:hover { background: #e7e5f2; }
 .clear-vendors { font-size: 11px; color: var(--text-soft); cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; margin-left: auto; }
 
+/* 免用發票切換 */
 .exempt-toggle { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-soft); display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
 .exempt-toggle input { width: auto; cursor: pointer; }
 .field input:disabled { background: #f1f1f4; color: #9ca3af; cursor: not-allowed; border-color: var(--border); box-shadow: none; }
 
+/* OCR 欄位動態高亮 (Vision API 填入時) */
 .field.ocr-filled input {
   border-color: var(--ok); box-shadow: 0 0 0 3px rgba(76,175,80,.18);
   animation: pulseOk 1.2s ease;
 }
 @keyframes pulseOk { 0%{ box-shadow:0 0 0 0 rgba(76,175,80,.5);} 100%{ box-shadow:0 0 0 3px rgba(76,175,80,.18);} }
 
+/* ---------- 上傳區 ---------- */
 .dropzone {
   border: 2px dashed #c7c4dd; border-radius: 14px; padding: 26px; text-align: center;
   cursor: pointer; transition: border-color .15s, background .15s; background: #faf9ff;
@@ -226,6 +242,7 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 
 .form-actions { display: flex; gap: 12px; margin-top: 24px; }
 
+/* ---------- 提示訊息 ---------- */
 .toast-host { position: fixed; right: 22px; bottom: 22px; z-index: 9000; display: flex; flex-direction: column; gap: 10px; }
 .toast {
   min-width: 240px; max-width: 360px; background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg);
@@ -238,6 +255,7 @@ header.appbar .brand p { font-size: 12px; opacity: .8; }
 .toast.info { border-left-color: var(--bg-grad-1); }
 @keyframes toastIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none; } }
 
+/* ---------- 紀錄列表 ---------- */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 thead th {
@@ -259,6 +277,7 @@ tbody tr:hover { background: #faf9ff; }
 .empty-state .ico { font-size: 40px; }
 .empty-state p { margin-top: 8px; font-size: 14px; }
 
+/* ---------- 雜項 ---------- */
 .hidden { display: none !important; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .muted { color: var(--text-soft); font-size: 13px; }
@@ -269,9 +288,6 @@ tbody tr:hover { background: #faf9ff; }
   .form-grid { grid-template-columns: 1fr; }
   header.appbar { flex-direction: column; gap: 14px; align-items: flex-start; }
   .user-box { width: 100%; justify-content: space-between; }
-  .flex-between { flex-direction: column; align-items: flex-start; }
-  .action-group { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-  .action-group button { width: 100%; }
 }
 </style>
 </head>
@@ -312,6 +328,7 @@ tbody tr:hover { background: #faf9ff; }
     </div>
   </header>
 
+  <!-- 四大數據看板 -->
   <section class="stats">
     <div class="stat-card"><span class="bar"></span><div class="label">目前可用結餘</div><div class="value" id="statBalance">NT$0</div></div>
     <div class="stat-card"><span class="bar"></span><div class="label">公司總撥款</div><div class="value" id="statAllocated">NT$0</div></div>
@@ -409,17 +426,14 @@ tbody tr:hover { background: #faf9ff; }
         <h2>📋 紀錄列表</h2>
         <p class="panel-sub" style="margin:0;">依日期由新到舊排列</p>
       </div>
-      <div class="action-group" style="display: flex; gap: 10px;">
-        <button class="btn btn-success" id="batchHandoverBtn">一鍵繳回全部未繳發票</button>
-        <button class="btn btn-light" id="retrySyncBtn">重試同步待處理</button>
-      </div>
+      <button class="btn btn-light" id="retrySyncBtn">重試同步待處理項目</button>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>日期</th><th>類別</th><th>金額</th><th>發票號碼</th><th>收據人</th>
-            <th>繳回時間</th><th>說明</th><th>照片</th><th>狀態</th>
+            <th>說明</th><th>照片</th><th>狀態</th>
           </tr>
         </thead>
         <tbody id="recordsBody"></tbody>
@@ -439,6 +453,9 @@ tbody tr:hover { background: #faf9ff; }
 <script src="https://apis.google.com/js/api.js"></script>
 
 <script>
+/* ============================================================
+   ⚙️  CONFIG — 已填入汎高科技有限公司的金鑰與指定雲端硬碟 ID
+   ============================================================ */
 const CONFIG = {
   CLIENT_ID: '701533078943-eepuoij9k5j4jd5sbqbrmmhjjoo41rip.apps.googleusercontent.com', 
   API_KEY:   'AIzaSyCBEfBSNjnENrbEWkkYiZXdjusJvmD-Wwo',                             
@@ -458,12 +475,15 @@ const DISCOVERY_DOCS = [
   'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
 ];
 
-const SHEET_RANGE = 'Sheet1!A:J';
+const SHEET_RANGE = 'Sheet1!A:I';
 const LS_PENDING = 'cat_pending_records_v1';
 const LS_VENDORS = 'fango_vendors_v1';
 const LS_TOKEN = 'cat_token_v1';
 const LS_TOKEN_EXPIRE = 'cat_expire_v1';
 
+/* ============================================================
+   狀態
+   ============================================================ */
 const state = {
   gapiReady: false,
   gisReady: false,
@@ -476,6 +496,9 @@ const state = {
   savedVendors: JSON.parse(localStorage.getItem(LS_VENDORS) || '["中油", "振宇五金", "7-11"]'),
 };
 
+/* ============================================================
+   小工具
+   ============================================================ */
 const $ = (id) => document.getElementById(id);
 const fmtMoney = (n) => 'NT$' + Number(n || 0).toLocaleString('en-US');
 const isConfigured = () =>
@@ -501,6 +524,9 @@ function toast(msg, type = 'info', ms = 4000) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, ms);
 }
 
+/* ============================================================
+   Google API 初始化與自動登入
+   ============================================================ */
 function maybeBoot() {
   if (window.gapi && !state._gapiLoadCalled) {
     state._gapiLoadCalled = true;
@@ -562,20 +588,27 @@ function checkAutoLogin() {
   if (token && expire && Date.now() < parseInt(expire) - 60000) {
     state.accessToken = token;
     gapi.client.setToken({ access_token: token });
-    
+    state.userEmail = '登入中…';
+    // 先直接進入主畫面，不等 userinfo 回應，避免網路較慢時卡在載入轉圈畫面
+    enterApp(true);
+    // 背景補上使用者 Email（失敗也不影響使用）
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: 'Bearer ' + token }
     }).then(r => r.json()).then(info => {
       state.userEmail = info.email || '已登入使用者';
-      enterApp(true); 
+      $('userEmail').textContent = state.userEmail;
     }).catch(() => {
-      showLogin();
+      state.userEmail = '已登入使用者';
+      $('userEmail').textContent = state.userEmail;
     });
   } else {
     showLogin();
   }
 }
 
+/* ============================================================
+   認證流程
+   ============================================================ */
 function requestSignIn() {
   if (!isConfigured()) { toast('請先設定 API 憑證', 'err'); return; }
   if (!state.tokenClient) { toast('Google 登入尚未就緒，請稍候', 'warn'); return; }
@@ -606,13 +639,13 @@ async function handleTokenResponse(resp) {
 }
 
 function enterApp(isAutoLogin = false) {
-  $('bootLoader').classList.add('hidden'); 
+  $('bootLoader').classList.add('hidden'); // 進入主畫面時務必關閉載入遮罩（修正自動登入卡在轉圈的問題）
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
   $('userEmail').textContent = state.userEmail;
   loadPendingFromLocal();
   renderRecords();
-  renderStats(); 
+  renderStats(); // 內含抓取 Excel 最新結餘功能
   if (!isAutoLogin) toast('登入成功，歡迎使用！', 'ok');
 }
 
@@ -632,10 +665,22 @@ function logout() {
   toast('已登出', 'info');
 }
 
+function showLogin() {
+  $('bootLoader').classList.add('hidden');
+  $('loginScreen').classList.remove('hidden');
+  if (!isConfigured()) $('configWarn').style.display = 'block';
+}
+
+/* ============================================================
+   🔄 智慧雙向讀取：從「結算總表」抓取各項數據 (撥款, 支出, 結餘)
+   ============================================================ */
 async function fetchExcelBalances() {
   if (!state.accessToken) return;
-  let readError = null; 
+  let readError = null; // 紀錄失敗原因，方便提示使用者
   try {
+    // 讀取 結算總表 的 G5(公司撥款總額), G6(累積總支出), G7(目前可用結餘)
+    // valueRenderOption: 'UNFORMATTED_VALUE' → 取「原始數值」而非格式化字串，
+    // 避免儲存格設了千分位或 NT$（例如 153,286、NT$82,538）時被 parseFloat 截斷。
     const resp = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: CONFIG.SHEET_ID,
       range: '結算總表!G5:G7',
@@ -656,9 +701,10 @@ async function fetchExcelBalances() {
       animateNumber($('statAllocated'), totalAllocated, true);
       animateNumber($('statTotal'), totalExpenseFromExcel, true);
       animateNumber($('statBalance'), currentBalanceFromExcel, true);
-      state._balanceWarned = false; 
+      state._balanceWarned = false; // 讀取成功，重置提示旗標
       return;
     }
+    // 有連到分頁，但 G5:G7 是空白
     readError = '已連到「結算總表」分頁，但 G5、G6、G7 沒有數字。請在 G5 填公司撥款總額、G6 填累積總支出、G7 填目前可用結餘。';
   } catch (e) {
     const msg = (e && e.result && e.result.error && e.result.error.message) || (e && e.message) || String(e);
@@ -672,16 +718,20 @@ async function fetchExcelBalances() {
     console.warn('fetchExcelBalances 失敗：', msg);
   }
 
+  // 降級保護：讀不到總表時，支出改用本機加總，其餘顯示提示文字
   const localTotal = state.records.reduce((s, r) => s + Number(r.amount || 0), 0);
   animateNumber($('statTotal'), localTotal, true);
   $('statBalance').innerHTML = `<span style="font-size:14px;color:var(--text-soft);">請至Sheet設定總表</span>`;
   $('statAllocated').innerHTML = `<span style="font-size:14px;color:var(--text-soft);">未設定</span>`;
   if (readError && !state._balanceWarned) {
-    state._balanceWarned = true; 
+    state._balanceWarned = true; // 同一次只提示一次，避免洗版
     toast(readError, 'warn', 9000);
   }
 }
 
+/* ============================================================
+   照片上傳 + Vision API OCR (金額與日期雙效識讀)
+   ============================================================ */
 function setupUpload() {
   const dz = $('dropzone');
   const input = $('fileInput');
@@ -696,8 +746,12 @@ function setupUpload() {
   input.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
   $('removeFileBtn').addEventListener('click', clearFile);
 
+  // 📋 支援從剪貼簿貼上圖片：
+  //   - 用螢幕截圖工具（Win+Shift+S、⌘+Shift+4 等）截好後直接貼
+  //   - 在相簿、檔案總管、其他網頁上「複製圖片」後貼
+  // 只要焦點在本頁，按 Ctrl/⌘ + V 即可上傳並辨識。
   window.addEventListener('paste', (e) => {
-    if ($('appScreen').classList.contains('hidden')) return; 
+    if ($('appScreen').classList.contains('hidden')) return; // 尚未進入主畫面則略過
     const items = (e.clipboardData || window.clipboardData)?.items;
     if (!items) return;
     for (const item of items) {
@@ -914,10 +968,13 @@ function extractDate(text) {
 
 function extractInvoiceNumber(text) {
   if (!text) return null;
+  // 台灣統一發票號碼格式：2 個大寫英文字母（字軌）+ 8 位數字
+  // 常見排版：AB-12345678、AB 12345678、AB12345678
+  // 用負向後查確保字母前面不是其他英文字母（避免把 TWD12345678 誤抓成 WD12345678）
   const regex = /(?<![A-Za-z])([A-Z]{2})[\s\-]?(\d{8})(?!\d)/g;
   let match;
   while ((match = regex.exec(text)) !== null) {
-    return `${match[1]}-${match[2]}`; 
+    return `${match[1]}-${match[2]}`; // 統一正規化為 AB-12345678
   }
   return null;
 }
@@ -932,6 +989,9 @@ function clearFile() {
   $('ocrCandidates').innerHTML = '';
 }
 
+/* ============================================================
+   智慧標籤 (廠商名稱)
+   ============================================================ */
 function renderVendorTags() {
   const host = $('vendorTags');
   host.innerHTML = '';
@@ -967,6 +1027,9 @@ function clearSavedVendors() {
   }
 }
 
+/* ============================================================
+   表單驗證 + 提交
+   ============================================================ */
 function setupForm() {
   const today = new Date().toISOString().split('T')[0];
   $('recordDate').value = today;
@@ -1001,76 +1064,6 @@ function setupForm() {
   $('recordForm').addEventListener('submit', onSubmit);
   $('resetBtn').addEventListener('click', resetForm);
   $('retrySyncBtn').addEventListener('click', retryPending);
-
-  // 註冊「一鍵繳回全部未繳發票」事件
-  $('batchHandoverBtn').addEventListener('click', async () => {
-    if (!state.accessToken) { toast('請先登入', 'err'); return; }
-    
-    const btn = $('batchHandoverBtn');
-    btn.disabled = true;
-    btn.textContent = '處理中…';
-
-    try {
-      // 1. 讀取目前的試算表內容
-      const resp = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: CONFIG.SHEET_ID,
-        range: 'Sheet1!A:J'
-      });
-      const rows = resp.result.values;
-      
-      if (!rows || rows.length <= 1) {
-        toast('試算表中尚無紀錄可繳回', 'info');
-        btn.disabled = false; btn.textContent = '一鍵繳回全部未繳發票';
-        return;
-      }
-
-      const updates = [];
-      const now = formatNow();
-
-      // 2. 從第2列開始檢查 (索引1)，尋找未繳回的紀錄
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        // J 欄為索引 9，若沒有值、純空白、或為「未繳回」
-        if (!row[9] || row[9].trim() === '' || row[9].trim() === '未繳回') {
-          updates.push({
-            range: `Sheet1!J${i + 1}`,
-            values: [[now]]
-          });
-        }
-      }
-
-      if (updates.length === 0) {
-        toast('沒有需要繳回的發票', 'ok');
-        btn.disabled = false; btn.textContent = '一鍵繳回全部未繳發票';
-        return;
-      }
-
-      // 3. 利用 batchUpdate 一次寫入所有更新
-      await gapi.client.sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId: CONFIG.SHEET_ID,
-        resource: {
-          valueInputOption: 'USER_ENTERED',
-          data: updates
-        }
-      });
-
-      // 4. 更新本機的顯示畫面
-      state.records.forEach(r => {
-        if (!r.handoverDate || r.handoverDate === '未繳回') {
-          r.handoverDate = now;
-        }
-      });
-      renderRecords();
-      toast(`成功將 ${updates.length} 筆發票標記為已繳回！`, 'ok', 5000);
-
-    } catch (e) {
-      console.error('批次繳回失敗', e);
-      toast('批次繳回失敗：' + e.message, 'err', 6000);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '一鍵繳回全部未繳發票';
-    }
-  });
 }
 
 function validate() {
@@ -1109,7 +1102,6 @@ async function onSubmit(e) {
     amount: Math.round(parseFloat($('amount').value)),
     invoiceNumber: finalInvoice,
     paidBy: finalPaidBy,
-    handoverDate: '', // 新增紀錄時預設未繳回
     description: $('description').value.trim(),
     photoUrl: '',
     time: formatNow(),
@@ -1138,7 +1130,7 @@ async function onSubmit(e) {
     saveVendorToLocal(finalPaidBy);
 
     renderRecords();
-    renderStats(); 
+    renderStats(); // 儲存成功，自動觸發重新讀取 Excel 最新結餘
     resetForm();
     toast(synced ? '紀錄已儲存並同步至 Google Sheet！' : '紀錄已暫存於本機，稍後將自動重試同步。', synced ? 'ok' : 'warn', 5000);
   } catch (err) {
@@ -1180,6 +1172,9 @@ function formatNow() {
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+/* ============================================================
+   Google Drive — 直接上傳至 dc 指定資料夾
+   ============================================================ */
 async function uploadToDrive(file) {
   const folderId = CONFIG.DRIVE_FOLDER_ID;
   const fileName = `receipt_${Date.now()}_${file.name}`;
@@ -1219,6 +1214,9 @@ async function uploadToDrive(file) {
   return data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`;
 }
 
+/* ============================================================
+   Google Sheet — append (含 3 次重試)
+   ============================================================ */
 async function appendToSheet(record) {
   await gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId: CONFIG.SHEET_ID,
@@ -1229,7 +1227,7 @@ async function appendToSheet(record) {
       values: [[
         record.date, record.category, record.amount, record.paidBy,
         record.description, record.photoUrl, record.time, record.ocrMethod,
-        record.invoiceNumber || '', record.handoverDate || ''
+        record.invoiceNumber || ''
       ]]
     }
   });
@@ -1248,6 +1246,9 @@ async function appendToSheetWithRetry(record, attempts = 3) {
   return false;
 }
 
+/* ============================================================
+   待同步項目（localStorage）
+   ============================================================ */
 function savePendingToLocal() {
   const pending = state.records.filter(r => !r.synced);
   try { localStorage.setItem(LS_PENDING, JSON.stringify(pending)); } catch {}
@@ -1286,8 +1287,14 @@ setInterval(() => {
   }
 }, 30000);
 
+/* ============================================================
+   渲染：統計 + 列表
+   ============================================================ */
 function renderStats() {
+  // 1. 渲染本機已記錄總筆數
   animateNumber($('statCount'), state.records.length, false);
+  
+  // 2. 向 Google 讀取最新結餘與累積支出 (非同步進行)
   fetchExcelBalances();
 }
 
@@ -1332,7 +1339,6 @@ function renderRecords() {
         ? '<span class="cat-tag" style="background:#9ca3af">免用發票</span>'
         : (escapeHtml(r.invoiceNumber) || '<span class="muted">—</span>')}</td>
       <td>${escapeHtml(r.paidBy)}</td>
-      <td>${r.handoverDate ? escapeHtml(r.handoverDate) : '<span class="muted">未繳回</span>'}</td>
       <td style="max-width:220px;">${escapeHtml(r.description) || '<span class="muted">—</span>'}</td>
       <td class="link-cell">${r.photoUrl ? `<a href="${escapeHtml(r.photoUrl)}" target="_blank" rel="noopener">檢視 ↗</a>` : '<span class="muted">無</span>'}</td>
       <td><span class="sync-badge ${r.synced ? 'synced':'pending'}">${r.synced ? '已同步' : '待同步'}</span></td>
@@ -1344,6 +1350,9 @@ function catLabel(c) {
   return c; 
 }
 
+/* ============================================================
+   啟動
+   ============================================================ */
 window.addEventListener('load', () => {
   setupUpload();
   setupForm();
@@ -1359,9 +1368,12 @@ window.addEventListener('load', () => {
   }, 150);
   setTimeout(() => {
     clearInterval(poll);
-    if (!(state.gapiReady && state.gisReady)) {
+    // 失效保護：不論原因，只要還卡在載入畫面，就強制脫困到登入頁，避免無限轉圈
+    if (!$('bootLoader').classList.contains('hidden')) {
       showLogin();
-      toast('Google 服務載入逾時，請檢查網路或重新整理。', 'warn', 7000);
+      if (!(state.gapiReady && state.gisReady)) {
+        toast('Google 服務載入逾時，請檢查網路或重新整理。', 'warn', 7000);
+      }
     }
   }, 12000);
 });
