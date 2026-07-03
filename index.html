@@ -296,6 +296,12 @@ tbody tr:hover { background: #faf9ff; }
 <div id="bootLoader">
   <div class="spinner"></div>
   <div>正在載入 Google 服務…</div>
+  <div id="bootEscape" style="display:none; text-align:center; margin-top:10px;">
+    <div style="font-size:13px; opacity:.9; margin-bottom:12px;">載入太久了嗎？</div>
+    <button class="btn" id="bootReloadBtn" style="background:rgba(255,255,255,.22); color:#fff; margin-right:8px;">重新整理</button>
+    <button class="btn" id="bootSkipBtn" style="background:#fff; color:#5b21b6;">直接前往登入</button>
+  </div>
+  <div style="position:fixed; bottom:12px; font-size:11px; opacity:.55;">版本 2026-07-03</div>
 </div>
 
 <section id="loginScreen" class="hidden">
@@ -1354,28 +1360,45 @@ function catLabel(c) {
    啟動
    ============================================================ */
 window.addEventListener('load', () => {
-  setupUpload();
-  setupForm();
+  // 手動脫困按鈕（不論卡在哪都能自救）
+  $('bootReloadBtn').addEventListener('click', () => location.reload());
+  $('bootSkipBtn').addEventListener('click', () => showLogin());
+
+  // 表單/上傳初始化用 try 包起來，避免萬一出錯把整個啟動流程卡死
+  try { setupUpload(); } catch (e) { console.error('setupUpload 失敗', e); }
+  try { setupForm(); } catch (e) { console.error('setupForm 失敗', e); }
   $('logoutBtn').addEventListener('click', logout);
 
   if (!isConfigured()) {
     setTimeout(showLogin, 400);
     return;
   }
+
+  // 載入超過 5 秒仍卡著，先顯示手動脫困按鈕
+  setTimeout(() => {
+    if (!$('bootLoader').classList.contains('hidden')) {
+      $('bootEscape').style.display = 'block';
+    }
+  }, 5000);
+
   const poll = setInterval(() => {
     maybeBoot();
     if (state.gapiReady && state.gisReady) clearInterval(poll);
   }, 150);
+
+  // 失效保護：10 秒後不論原因，只要還卡在載入畫面就強制跳到登入頁
   setTimeout(() => {
     clearInterval(poll);
-    // 失效保護：不論原因，只要還卡在載入畫面，就強制脫困到登入頁，避免無限轉圈
     if (!$('bootLoader').classList.contains('hidden')) {
       showLogin();
-      if (!(state.gapiReady && state.gisReady)) {
-        toast('Google 服務載入逾時，請檢查網路或重新整理。', 'warn', 7000);
+      // 判斷是不是 Google 的程式根本沒載進來（多半是網路或防火牆擋掉了）
+      if (!window.gapi || !(window.google && window.google.accounts)) {
+        toast('無法連上 Google 服務。可能是網路、防火牆或擴充套件擋掉了 apis.google.com / accounts.google.com，請換個網路或關閉阻擋後重試。', 'err', 12000);
+      } else if (!(state.gapiReady && state.gisReady)) {
+        toast('Google 服務載入逾時，請檢查網路或重新整理。', 'warn', 8000);
       }
     }
-  }, 12000);
+  }, 10000);
 });
 </script>
 </body>
